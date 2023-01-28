@@ -82,6 +82,7 @@ pub struct Gameplay {
     pub team_spawn_points: Option<TeamSpawnPoints>,
     pub winner_if_timeout: Option<i32>,
     pub winner_if_extermination: Option<i32>,
+    pub round_length: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -96,8 +97,11 @@ pub enum VehicleCamouflageKing {
 #[serde(rename_all = "snake_case")]
 pub enum GameplayType {
     Ctf,
+    Ctf2,
     Ctf30x30, // Grand battle
     Domination,
+    Domination2,
+    Domination30x30,
     Assault,
     Assault2,
     Bootcamp,
@@ -110,9 +114,9 @@ pub enum GameplayType {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ArenaDefinition {
-    pub bounding_box: BoundingBox,
+    pub bounding_box: Option<BoundingBox>,
     pub gameplay_types: HashMap<GameplayType, Gameplay>,
-    pub vehicle_camouflage_kind: VehicleCamouflageKing,
+    pub vehicle_camouflage_kind: Option<VehicleCamouflageKing>,
 }
 
 impl ArenaDefinition {

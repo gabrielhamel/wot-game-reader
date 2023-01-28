@@ -1,7 +1,7 @@
 use crate::errors::GameReadError;
 use crate::localization::{LocalizationCatalog, Nation};
 use crate::map::arena::GameplayType::*;
-use crate::map::arena::{BoundingBox, GameplayType, Vector2, VehicleCamouflageKing};
+use crate::map::arena::{ArenaDefinition, BoundingBox, GameplayType, Vector2, VehicleCamouflageKing};
 use crate::GameReader;
 use std::env;
 
@@ -49,10 +49,10 @@ fn arena_parsing() -> Result<(), GameReadError> {
 
     let arena = map.arena()?;
 
-    assert_eq!(arena.vehicle_camouflage_kind, VehicleCamouflageKing::Summer);
+    assert_eq!(arena.vehicle_camouflage_kind, Some(VehicleCamouflageKing::Summer));
     assert_eq!(
         arena.bounding_box,
-        BoundingBox {
+        Some(BoundingBox {
             bottom_left: Vector2 {
                 x: -500_f32,
                 y: -500_f32
@@ -61,7 +61,7 @@ fn arena_parsing() -> Result<(), GameReadError> {
                 x: 500_f32,
                 y: 500_f32
             },
-        }
+        })
     );
     let gameplays: Vec<GameplayType> = arena.gameplay_types.into_iter().map(|e| e.0).collect();
     let gameplay_types = vec![Ctf, Assault2, Domination, Bootcamp, MapsTraining];
@@ -126,5 +126,14 @@ fn tank_short_name() -> Result<(), GameReadError> {
     let localization = game_reader.localization();
     let ussr = localization.translate(LocalizationCatalog::Tanks(Nation::Japan), "J16_ST_B1")?;
     assert_eq!(ussr, "STB-1");
+    Ok(())
+}
+
+#[test]
+fn arena_merge() -> Result<(), GameReadError> {
+    let game_reader = get_reader();
+    let _arena_def1 = ArenaDefinition::parse(&game_reader, "_default_")?;
+    let _arena_def2 = ArenaDefinition::parse(&game_reader, "01_karelia")?;
+    // TODO
     Ok(())
 }
