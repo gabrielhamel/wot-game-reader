@@ -1,10 +1,9 @@
-use crate::error::GameReadError;
+use crate::errors::GameReadError;
 use crate::map::Map;
 use crate::GameReader;
 use serde::{Deserialize, Serialize};
 use serde_xml_rs as xml;
 use std::fs::File;
-use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -20,13 +19,13 @@ pub struct Root {
 }
 
 pub struct MapReader {
-    sources_path: PathBuf,
+    game_reader: GameReader,
 }
 
 impl From<&GameReader> for MapReader {
     fn from(game_reader: &GameReader) -> Self {
         MapReader {
-            sources_path: game_reader.sources_path().clone(),
+            game_reader: game_reader.clone(),
         }
     }
 }
@@ -34,6 +33,7 @@ impl From<&GameReader> for MapReader {
 impl MapReader {
     pub fn list(&self) -> Result<Vec<Map>, GameReadError> {
         let path = self
+            .game_reader
             .sources_path
             .join("res")
             .join("scripts")
@@ -44,7 +44,7 @@ impl MapReader {
         Ok(parsed
             .map
             .into_iter()
-            .map(|xml| Map::new(&xml, &self.sources_path))
+            .map(|xml| Map::new(&xml, &self.game_reader))
             .collect())
     }
 

@@ -1,10 +1,10 @@
-use crate::error::GameReadError;
+use crate::errors::GameReadError;
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_xml_rs as xml;
 use std::collections::HashMap;
 use std::fs::File;
-use std::path::PathBuf;
 use std::str::FromStr;
+use crate::GameReader;
 
 #[derive(Debug, Serialize, PartialEq)]
 pub struct Vector2 {
@@ -116,8 +116,9 @@ pub struct ArenaDefinition {
 }
 
 impl ArenaDefinition {
-    pub fn parse(sources_path: &PathBuf, name: &str) -> Result<ArenaDefinition, GameReadError> {
-        let path = sources_path
+    pub fn parse(game_reader: &GameReader, name: &str) -> Result<ArenaDefinition, GameReadError> {
+        let path = game_reader
+            .sources_path
             .join("res")
             .join("scripts")
             .join("arena_defs")

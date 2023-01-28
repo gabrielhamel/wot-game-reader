@@ -1,20 +1,20 @@
 pub mod arena;
 pub mod reader;
 
-use crate::error::GameReadError;
+use crate::errors::GameReadError;
 use crate::map::arena::ArenaDefinition;
 use crate::map::reader::XmlMap;
-use std::path::PathBuf;
+use crate::GameReader;
+use crate::localization::LocalizationCatalog::Arenas;
 
-#[derive(Debug)]
 pub struct Map {
-    sources_path: PathBuf,
+    game_reader: GameReader,
     pub name: String,
     pub is_development: bool,
 }
 
 impl Map {
-    pub fn new(xml_map: &XmlMap, sources_path: &PathBuf) -> Map {
+    pub fn new(xml_map: &XmlMap, game_reader: &GameReader) -> Map {
         let is_development = if let Some(dev) = &xml_map.is_development {
             dev == "True"
         } else {
@@ -23,14 +23,18 @@ impl Map {
         Map {
             name: xml_map.name.clone(),
             is_development,
-            sources_path: sources_path.clone(),
+            game_reader: game_reader.clone(),
         }
     }
 
     pub fn arena(&self) -> Result<ArenaDefinition, GameReadError> {
         match self.is_development {
             true => Err(GameReadError::ArenaDefinitionNotFound(self.name.clone())),
-            false => ArenaDefinition::parse(&self.sources_path, &self.name),
+            false => ArenaDefinition::parse(&self.game_reader, &self.name),
         }
+    }
+
+    pub fn display_name(&self) -> Result<String, GameReadError> {
+        self.game_reader.localization().translate(Arenas, &format!("{}/name", &self.name))
     }
 }

@@ -8,11 +8,11 @@ Crate that parse information from the game World of Tanks and his sources uncomp
 
 ## Features:
 - Maps lists
+- Localization module to translate objects keys to localized names 
 - Arena information like (GameMode, BoundingBox, Spawn points, Bases)
 
 ## WIP:
 - Merge default arena definition with the specific arena definition
-- Locale module for display string
 - Vehicles module
 
 ## License
