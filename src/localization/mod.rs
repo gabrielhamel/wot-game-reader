@@ -1,5 +1,5 @@
 use crate::errors::GameReadError;
-use crate::GameReader;
+use crate::game_reader::GameReader;
 use gettext::Catalog;
 use serde::Serialize;
 use serde_variant::to_variant_name;
@@ -59,7 +59,7 @@ impl LocalizationCatalog {
             .iter()
             .collect::<PathBuf>(),
         };
-        let filepath = game_reader.game_path.join(path);
+        let filepath = game_reader.game_path().join(path);
         let final_path = File::open(filepath)?;
         Ok(Catalog::parse(final_path)?)
     }

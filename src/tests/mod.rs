@@ -6,9 +6,9 @@ use crate::map::arena::Team::{Team1, Team2};
 use crate::map::arena::{
     ArenaDefinition, BoundingBox, GameplayType, Vector2, VehicleCamouflageKind,
 };
-use crate::GameReader;
 use std::collections::HashMap;
 use std::env;
+use crate::game_reader::GameReader;
 
 // Tests are run on an English client
 

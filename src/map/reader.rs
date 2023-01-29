@@ -1,6 +1,6 @@
 use crate::errors::GameReadError;
+use crate::game_reader::GameReader;
 use crate::map::Map;
-use crate::GameReader;
 use serde::{Deserialize, Serialize};
 use serde_xml_rs as xml;
 use std::fs::File;
@@ -34,7 +34,7 @@ impl MapReader {
     pub fn list(&self) -> Result<Vec<Map>, GameReadError> {
         let path = self
             .game_reader
-            .sources_path
+            .sources_path()
             .join("res")
             .join("scripts")
             .join("arena_defs")

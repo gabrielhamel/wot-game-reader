@@ -2,10 +2,10 @@ pub mod arena;
 pub mod reader;
 
 use crate::errors::GameReadError;
+use crate::game_reader::GameReader;
 use crate::localization::LocalizationCatalog::Arenas;
 use crate::map::arena::ArenaDefinition;
 use crate::map::reader::XmlMap;
-use crate::GameReader;
 
 pub struct Map {
     game_reader: GameReader,

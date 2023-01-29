@@ -1,6 +1,6 @@
 use crate::errors::GameReadError;
+use crate::game_reader::GameReader;
 use crate::map::arena::Team::{Team1, Team2};
-use crate::GameReader;
 use merge::Merge;
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_xml_rs as xml;
@@ -174,7 +174,7 @@ impl ArenaDefinition {
     pub fn parse(game_reader: &GameReader, name: &str) -> Result<ArenaDefinition, GameReadError> {
         let default = File::open(
             game_reader
-                .sources_path
+                .sources_path()
                 .join("res")
                 .join("scripts")
                 .join("arena_defs")
@@ -182,7 +182,7 @@ impl ArenaDefinition {
         )?;
         let map = File::open(
             game_reader
-                .sources_path
+                .sources_path()
                 .join("res")
                 .join("scripts")
                 .join("arena_defs")
