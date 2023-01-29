@@ -1,8 +1,13 @@
 use crate::errors::GameReadError;
 use crate::localization::{LocalizationCatalog, Nation};
+use crate::map::arena::BasePositions::Position1;
 use crate::map::arena::GameplayType::*;
-use crate::map::arena::{ArenaDefinition, BoundingBox, GameplayType, Vector2, VehicleCamouflageKing};
+use crate::map::arena::Team::{Team1, Team2};
+use crate::map::arena::{
+    ArenaDefinition, BoundingBox, GameplayType, Vector2, VehicleCamouflageKind,
+};
 use crate::GameReader;
+use std::collections::HashMap;
 use std::env;
 
 // Tests are run on an English client
@@ -49,10 +54,13 @@ fn arena_parsing() -> Result<(), GameReadError> {
 
     let arena = map.arena()?;
 
-    assert_eq!(arena.vehicle_camouflage_kind, Some(VehicleCamouflageKing::Summer));
     assert_eq!(
-        arena.bounding_box,
-        Some(BoundingBox {
+        arena.vehicle_camouflage_kind()?,
+        VehicleCamouflageKind::Summer
+    );
+    assert_eq!(
+        arena.bounding_box()?,
+        BoundingBox {
             bottom_left: Vector2 {
                 x: -500_f32,
                 y: -500_f32
@@ -61,7 +69,7 @@ fn arena_parsing() -> Result<(), GameReadError> {
                 x: 500_f32,
                 y: 500_f32
             },
-        })
+        }
     );
     let gameplays: Vec<GameplayType> = arena.gameplay_types.into_iter().map(|e| e.0).collect();
     let gameplay_types = vec![Ctf, Assault2, Domination, Bootcamp, MapsTraining];
@@ -132,8 +140,30 @@ fn tank_short_name() -> Result<(), GameReadError> {
 #[test]
 fn arena_merge() -> Result<(), GameReadError> {
     let game_reader = get_reader();
-    let _arena_def1 = ArenaDefinition::parse(&game_reader, "_default_")?;
-    let _arena_def2 = ArenaDefinition::parse(&game_reader, "01_karelia")?;
-    // TODO
+    let arena = ArenaDefinition::parse(&game_reader, "01_karelia")?;
+
+    assert_eq!(arena.round_length(None)?, 900);
+
+    let assault = &arena.gameplay_types[&Assault];
+
+    assert_eq!(arena.round_length(Some(Assault))?, 600);
+    assert_eq!(arena.winner_if_timeout(Some(Assault))?, Some(Team1));
+    assert_eq!(arena.winner_if_timeout(None)?, None);
+    assert_eq!(
+        assault.team_base_positions,
+        Some(HashMap::from([
+            (
+                Team1,
+                HashMap::from([(
+                    Position1,
+                    Some(Vector2 {
+                        x: -278.80505,
+                        y: 213.26526
+                    })
+                )])
+            ),
+            (Team2, HashMap::new())
+        ]))
+    );
     Ok(())
 }

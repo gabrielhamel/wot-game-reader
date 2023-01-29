@@ -1,3 +1,4 @@
+use crate::map::arena::GameplayType;
 use serde_variant::UnsupportedType;
 
 #[derive(thiserror::Error, Debug)]
@@ -13,6 +14,12 @@ pub enum GameReadError {
 
     #[error("The specified map {0} doesn't contains arena definition")]
     ArenaDefinitionNotFound(String),
+
+    #[error("The specified arena key {0} aren't present")]
+    ArenaKeyNotFound(String),
+
+    #[error("The specified arena mode {0} aren't present")]
+    ArenaModNotFound(GameplayType),
 
     #[error("Localization catalog not found")]
     LocalizationCatalogNotFound(#[from] gettext::Error),

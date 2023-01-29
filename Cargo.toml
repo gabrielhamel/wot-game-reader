@@ -11,3 +11,4 @@ serde = { version = "1", features = ["derive"] }
 serde-xml-rs = "0.6"
 gettext = "0.4"
 serde_variant = "0.1"
+merge = { git = "https://github.com/Gabouchet/merge-rs.git",  features = ["std", "num"] }

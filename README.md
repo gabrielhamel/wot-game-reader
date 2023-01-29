@@ -12,7 +12,7 @@ Crate that parse information from the game World of Tanks and his sources uncomp
 - Arena information like (GameMode, BoundingBox, Spawn points, Bases)
 
 ## WIP:
-- Merge default arena definition with the specific arena definition
+- Arena definition fetch methods
 - Vehicles module
 
 ## License

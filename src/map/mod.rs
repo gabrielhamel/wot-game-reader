@@ -2,10 +2,10 @@ pub mod arena;
 pub mod reader;
 
 use crate::errors::GameReadError;
+use crate::localization::LocalizationCatalog::Arenas;
 use crate::map::arena::ArenaDefinition;
 use crate::map::reader::XmlMap;
 use crate::GameReader;
-use crate::localization::LocalizationCatalog::Arenas;
 
 pub struct Map {
     game_reader: GameReader,
@@ -35,6 +35,8 @@ impl Map {
     }
 
     pub fn display_name(&self) -> Result<String, GameReadError> {
-        self.game_reader.localization().translate(Arenas, &format!("{}/name", &self.name))
+        self.game_reader
+            .localization()
+            .translate(Arenas, &format!("{}/name", &self.name))
     }
 }
