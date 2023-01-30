@@ -16,4 +16,4 @@ Crate that parse information from the game World of Tanks and his sources uncomp
 - Vehicles module
 
 ## License
-MIT license (LICENSE-MIT or http://opensource.org/licenses/MIT)
+MIT or Apache-2.0

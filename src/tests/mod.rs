@@ -1,4 +1,5 @@
 use crate::errors::GameReadError;
+use crate::game_reader::GameReader;
 use crate::localization::{LocalizationCatalog, Nation};
 use crate::map::arena::BasePositions::Position1;
 use crate::map::arena::GameplayType::*;
@@ -8,7 +9,6 @@ use crate::map::arena::{
 };
 use std::collections::HashMap;
 use std::env;
-use crate::game_reader::GameReader;
 
 // Tests are run on an English client
 
