@@ -28,15 +28,12 @@ impl Map {
     }
 
     pub fn arena(&self) -> Result<ArenaDefinition, GameReadError> {
-        match self.is_development {
-            true => Err(GameReadError::ArenaDefinitionNotFound(self.name.clone())),
-            false => ArenaDefinition::parse(&self.game_reader, &self.name),
-        }
+        ArenaDefinition::parse(&self.game_reader, &self)
     }
 
     pub fn display_name(&self) -> Result<String, GameReadError> {
         self.game_reader
             .localization()
-            .translate(Arenas, &format!("{}/name", &self.name))
+            .fetch(Arenas, &format!("{}/name", &self.name))
     }
 }

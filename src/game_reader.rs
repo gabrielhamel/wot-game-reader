@@ -4,20 +4,14 @@ use std::path::PathBuf;
 
 #[derive(Clone)]
 pub struct GameReader {
-    game_path: PathBuf,
     sources_path: PathBuf,
 }
 
 impl GameReader {
-    pub fn connect(game_path: &str, sources_path: &str) -> Self {
+    pub fn connect(sources_path: &str) -> Self {
         GameReader {
-            game_path: PathBuf::from(game_path),
             sources_path: PathBuf::from(sources_path),
         }
-    }
-
-    pub fn game_path(&self) -> &PathBuf {
-        &self.game_path
     }
 
     pub fn sources_path(&self) -> &PathBuf {

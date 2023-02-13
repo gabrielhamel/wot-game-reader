@@ -17,6 +17,6 @@ path = "src/lib.rs"
 thiserror = "1"
 serde = { version = "1", features = ["derive"] }
 serde-xml-rs = "0.6"
-gettext = "0.4"
+poreader = "1.1.1"
 serde_variant = "0.1"
 merge = { git = "https://github.com/Gabouchet/merge-rs", version = "0.1.0" }

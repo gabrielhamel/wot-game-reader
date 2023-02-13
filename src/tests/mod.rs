@@ -2,22 +2,19 @@ use crate::errors::GameReadError;
 use crate::game_reader::GameReader;
 use crate::localization::{LocalizationCatalog, Nation};
 use crate::map::arena::BasePositions::Position1;
-use crate::map::arena::GameplayType::*;
+use crate::map::arena::ArenaMode::*;
 use crate::map::arena::Team::{Team1, Team2};
-use crate::map::arena::{
-    ArenaDefinition, BoundingBox, GameplayType, Vector2, VehicleCamouflageKind,
-};
+use crate::map::arena::{BoundingBox, ArenaMode, Vector2, VehicleCamouflageKind};
+use crate::map::reader::MapReader;
 use std::collections::HashMap;
 use std::env;
 
 // Tests are run on an English client
 
 fn get_reader() -> GameReader {
-    let game_path: String =
-        env::var("GAME_PATH").expect("Environment variable GAME_PATH must be filled");
     let sources_path: String =
         env::var("SOURCES_PATH").expect("Environment variable SOURCES_PATH must be filled");
-    GameReader::connect(&game_path, &sources_path)
+    GameReader::connect(&sources_path)
 }
 
 #[test]
@@ -71,7 +68,7 @@ fn arena_parsing() -> Result<(), GameReadError> {
             },
         }
     );
-    let gameplays: Vec<GameplayType> = arena.gameplay_types.into_iter().map(|e| e.0).collect();
+    let gameplays: Vec<ArenaMode> = arena.available_modes();
     let gameplay_types = vec![Ctf, Assault2, Domination, Bootcamp, MapsTraining];
     for gameplay_type in &gameplay_types {
         assert_eq!(gameplays.contains(gameplay_type), true);
@@ -84,7 +81,7 @@ fn arena_parsing() -> Result<(), GameReadError> {
 fn localization_nation() -> Result<(), GameReadError> {
     let game_reader = get_reader();
     let localization = game_reader.localization();
-    let ussr = localization.translate(LocalizationCatalog::Nations, "ussr")?;
+    let ussr = localization.fetch(LocalizationCatalog::Nations, "ussr")?;
     assert_eq!(ussr, "U.S.S.R.");
     Ok(())
 }
@@ -93,7 +90,7 @@ fn localization_nation() -> Result<(), GameReadError> {
 fn localization_nationality() -> Result<(), GameReadError> {
     let game_reader = get_reader();
     let localization = game_reader.localization();
-    let ussr = localization.translate(LocalizationCatalog::Nations, "ussr/genetiveCase")?;
+    let ussr = localization.fetch(LocalizationCatalog::Nations, "ussr/genetiveCase")?;
     assert_eq!(ussr, "Soviet");
     Ok(())
 }
@@ -102,7 +99,7 @@ fn localization_nationality() -> Result<(), GameReadError> {
 fn arena_name() -> Result<(), GameReadError> {
     let game_reader = get_reader();
     let localization = game_reader.localization();
-    let ussr = localization.translate(LocalizationCatalog::Arenas, "01_karelia/name")?;
+    let ussr = localization.fetch(LocalizationCatalog::Arenas, "01_karelia/name")?;
     assert_eq!(ussr, "Karelia");
     Ok(())
 }
@@ -120,7 +117,7 @@ fn map_name() -> Result<(), GameReadError> {
 fn tank_name() -> Result<(), GameReadError> {
     let game_reader = get_reader();
     let localization = game_reader.localization();
-    let ussr = localization.translate(
+    let ussr = localization.fetch(
         LocalizationCatalog::Tanks(Nation::France),
         "F108_Panhard_EBR_105",
     )?;
@@ -132,23 +129,23 @@ fn tank_name() -> Result<(), GameReadError> {
 fn tank_short_name() -> Result<(), GameReadError> {
     let game_reader = get_reader();
     let localization = game_reader.localization();
-    let ussr = localization.translate(LocalizationCatalog::Tanks(Nation::Japan), "J16_ST_B1")?;
-    assert_eq!(ussr, "STB-1");
+    let res = localization.fetch(LocalizationCatalog::Tanks(Nation::Japan), "J16_ST_B1");
+    assert_eq!(res.is_err(), true);
+    let res = localization.fetch(LocalizationCatalog::Tanks(Nation::Japan), "ST_B1")?;
+    assert_eq!(res, "STB-1");
     Ok(())
 }
 
 #[test]
 fn arena_merge() -> Result<(), GameReadError> {
     let game_reader = get_reader();
-    let arena = ArenaDefinition::parse(&game_reader, "01_karelia")?;
+    let map = MapReader::from(&game_reader).get_by_name("01_karelia")?;
+    let arena = map.arena()?;
+    let assault = arena.get_mode(Assault);
 
-    assert_eq!(arena.round_length(None)?, 900);
-
-    let assault = &arena.gameplay_types[&Assault];
-
-    assert_eq!(arena.round_length(Some(Assault))?, 600);
-    assert_eq!(arena.winner_if_timeout(Some(Assault))?, Some(Team1));
-    assert_eq!(arena.winner_if_timeout(None)?, None);
+    assert_eq!(assault.round_length()?, 600);
+    assert_eq!(assault.winner_if_timeout, Some(Team1));
+    assert_eq!(assault.winner_if_extermination, None);
     assert_eq!(
         assault.team_base_positions,
         Some(HashMap::from([

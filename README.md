@@ -3,7 +3,6 @@
 Crate that parse information from the game World of Tanks and his sources uncompiled.
 
 ## Needed:
-- The game path (eg. C:\Games\World_of_Tanks_EU)<br>
 - Uncompiled sources from https://github.com/IzeBerg/wot-src/tree/EU/sources
 
 ## Features:

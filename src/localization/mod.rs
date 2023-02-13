@@ -1,10 +1,10 @@
 use crate::errors::GameReadError;
 use crate::game_reader::GameReader;
-use gettext::Catalog;
 use serde::Serialize;
 use serde_variant::to_variant_name;
 use std::fs::File;
 use std::path::PathBuf;
+use poreader::PoParser;
 
 pub struct LocalizationReader {
     game_reader: GameReader,
@@ -42,46 +42,45 @@ pub enum LocalizationCatalog {
 }
 
 impl LocalizationCatalog {
-    pub fn get(&self, game_reader: &GameReader) -> Result<Catalog, GameReadError> {
+    pub fn get(&self, game_reader: &GameReader) -> Result<File, GameReadError> {
         let path = match self {
-            LocalizationCatalog::Arenas => ["res", "text", "lc_messages", "arenas.mo"]
+            LocalizationCatalog::Arenas => ["res", "text", "lc_messages", "arenas.po"]
                 .iter()
                 .collect::<PathBuf>(),
-            LocalizationCatalog::Nations => ["res", "text", "lc_messages", "nations.mo"]
+            LocalizationCatalog::Nations => ["res", "text", "lc_messages", "nations.po"]
                 .iter()
                 .collect::<PathBuf>(),
             LocalizationCatalog::Tanks(nation) => [
                 "res",
                 "text",
                 "lc_messages",
-                &format!("{}_vehicles.mo", to_variant_name(nation)?),
+                &format!("{}_vehicles.po", to_variant_name(nation)?),
             ]
             .iter()
             .collect::<PathBuf>(),
         };
-        let filepath = game_reader.game_path().join(path);
-        let final_path = File::open(filepath)?;
-        Ok(Catalog::parse(final_path)?)
+        let filepath = game_reader.sources_path().join(path);
+        Ok(File::open(filepath)?)
     }
 }
 
 impl LocalizationReader {
-    pub fn translate(
-        &self,
-        catalog: LocalizationCatalog,
-        key: &str,
-    ) -> Result<String, GameReadError> {
-        let translator = catalog.get(&self.game_reader)?;
-        let translation = translator.gettext(key).to_string();
-        if translation == key {
-            // Use the short name. Some tanks doesn't need their prefix (STB-1)
-            let short_name = &key[key
-                .find('_')
-                .ok_or(GameReadError::CharacterNotFound('_', key.to_string()))?
-                + 1..];
-            Ok(translator.gettext(short_name).to_string())
-        } else {
-            Ok(translation)
-        }
+    pub fn fetch(&self, catalog: LocalizationCatalog, key: &str) -> Result<String, GameReadError> {
+        let file = catalog.get(&self.game_reader)?;
+        let parser = PoParser::new();
+        let mut reader = parser.parse(file)?;
+        let found = reader.find_map(|e| {
+            match e {
+                Ok(unit) => {
+                    if unit.message().get_id() == key {
+                        Some(unit.message().get_text().to_string())
+                    } else {
+                        None
+                    }
+                },
+                _ => None,
+            }
+        });
+        found.ok_or(GameReadError::LocalizationKeyNotFound)
     }
 }

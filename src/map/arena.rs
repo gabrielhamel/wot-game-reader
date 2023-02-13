@@ -1,6 +1,7 @@
 use crate::errors::GameReadError;
 use crate::game_reader::GameReader;
 use crate::map::arena::Team::{Team1, Team2};
+use crate::map::Map;
 use merge::Merge;
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_xml_rs as xml;
@@ -95,7 +96,7 @@ where
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Merge)]
 #[serde(rename_all = "camelCase")]
-pub struct Gameplay {
+pub struct ArenaModeDesc {
     #[merge(strategy = merge::option::overwrite_none)]
     pub team_base_positions: Option<HashMap<Team, HashMap<BasePositions, Option<Vector2>>>>,
 
@@ -104,11 +105,11 @@ pub struct Gameplay {
 
     #[merge(strategy = merge::option::overwrite_none)]
     #[serde(default, deserialize_with = "team_id_deserializer")]
-    winner_if_timeout: Option<Team>,
+    pub winner_if_timeout: Option<Team>,
 
     #[merge(strategy = merge::option::overwrite_none)]
     #[serde(default, deserialize_with = "team_id_deserializer")]
-    winner_if_extermination: Option<Team>,
+    pub winner_if_extermination: Option<Team>,
 
     #[merge(strategy = merge::option::overwrite_none)]
     round_length: Option<i32>,
@@ -122,9 +123,9 @@ pub enum VehicleCamouflageKind {
     Desert,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Copy, Clone)]
 #[serde(rename_all = "snake_case")]
-pub enum GameplayType {
+pub enum ArenaMode {
     Ctf,
     Ctf2,
     Ctf30x30, // Grand battle
@@ -140,7 +141,7 @@ pub enum GameplayType {
     Epic,  // Front line
 }
 
-impl fmt::Display for GameplayType {
+impl fmt::Display for ArenaMode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
@@ -153,7 +154,7 @@ pub struct ArenaDefinition {
     bounding_box: Option<BoundingBox>,
 
     #[merge(strategy = merge::hashmap::intersection)]
-    pub gameplay_types: HashMap<GameplayType, Gameplay>,
+    gameplay_types: HashMap<ArenaMode, ArenaModeDesc>,
 
     #[merge(strategy = merge::option::overwrite_none)]
     vehicle_camouflage_kind: Option<VehicleCamouflageKind>,
@@ -171,7 +172,7 @@ pub struct ArenaDefinition {
 }
 
 impl ArenaDefinition {
-    pub fn parse(game_reader: &GameReader, name: &str) -> Result<ArenaDefinition, GameReadError> {
+    pub fn parse(game_reader: &GameReader, map: &Map) -> Result<ArenaDefinition, GameReadError> {
         let default = File::open(
             game_reader
                 .sources_path()
@@ -180,17 +181,35 @@ impl ArenaDefinition {
                 .join("arena_defs")
                 .join("_default_.xml"),
         )?;
+        let default_def: ArenaDefinition = xml::from_reader(default)?;
+        if map.is_development {
+            return Ok(default_def);
+        }
+
         let map = File::open(
             game_reader
                 .sources_path()
                 .join("res")
                 .join("scripts")
                 .join("arena_defs")
-                .join(format!("{}.xml", name)),
+                .join(format!("{}.xml", map.name)),
         )?;
-        let default_def: ArenaDefinition = xml::from_reader(default)?;
         let mut map_def: ArenaDefinition = xml::from_reader(map)?;
         map_def.merge(default_def);
+
+        // Merge shared fields between different gameplay and default arena
+        for (_, mut gameplay) in &mut map_def.gameplay_types {
+            if gameplay.winner_if_extermination == None {
+                gameplay.winner_if_extermination = map_def.winner_if_extermination;
+            }
+            if gameplay.winner_if_timeout == None {
+                gameplay.winner_if_timeout = map_def.winner_if_timeout;
+            }
+            if gameplay.round_length == None {
+                gameplay.round_length = map_def.round_length;
+            }
+        }
+
         Ok(map_def)
     }
 
@@ -208,55 +227,20 @@ impl ArenaDefinition {
             )))
     }
 
-    pub fn round_length(&self, mode: Option<GameplayType>) -> Result<i32, GameReadError> {
-        let default = self
-            .round_length
+    pub fn available_modes(&self) -> Vec<ArenaMode> {
+        self.gameplay_types.keys().cloned().collect()
+    }
+
+    pub fn get_mode(&self, mode: ArenaMode) -> &ArenaModeDesc {
+        &self.gameplay_types[&mode]
+    }
+}
+
+impl ArenaModeDesc {
+    pub fn round_length(&self) -> Result<i32, GameReadError> {
+        self.round_length
             .ok_or(GameReadError::ArenaKeyNotFound(String::from(
                 "round_length",
-            )));
-        match mode {
-            None => default,
-            Some(gameplay) => {
-                let res = self
-                    .gameplay_types
-                    .get(&gameplay)
-                    .ok_or(GameReadError::ArenaModNotFound(gameplay))?
-                    .round_length;
-                match res {
-                    Some(round_length) => Ok(round_length),
-                    _ => default,
-                }
-            }
-        }
-    }
-
-    pub fn winner_if_timeout(
-        &self,
-        mode: Option<GameplayType>,
-    ) -> Result<Option<Team>, GameReadError> {
-        let default = self.winner_if_timeout;
-        match mode {
-            None => Ok(default),
-            Some(gameplay) => Ok(self
-                .gameplay_types
-                .get(&gameplay)
-                .ok_or(GameReadError::ArenaModNotFound(gameplay))?
-                .winner_if_timeout),
-        }
-    }
-
-    pub fn winner_if_extermination(
-        &self,
-        mode: Option<GameplayType>,
-    ) -> Result<Option<Team>, GameReadError> {
-        let default = self.winner_if_extermination;
-        match mode {
-            None => Ok(default),
-            Some(gameplay) => Ok(self
-                .gameplay_types
-                .get(&gameplay)
-                .ok_or(GameReadError::ArenaModNotFound(gameplay))?
-                .winner_if_extermination),
-        }
+            )))
     }
 }
