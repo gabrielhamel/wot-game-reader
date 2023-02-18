@@ -2,7 +2,7 @@ use crate::errors::GameReadError;
 use crate::game_reader::GameReader;
 use crate::map::arena::Team::{Team1, Team2};
 use crate::map::Map;
-use merge::Merge;
+use merge_hashmap::Merge;
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_xml_rs as xml;
 use std::collections::HashMap;
@@ -97,21 +97,21 @@ where
 #[derive(Debug, Serialize, Deserialize, PartialEq, Merge)]
 #[serde(rename_all = "camelCase")]
 pub struct ArenaModeDesc {
-    #[merge(strategy = merge::option::overwrite_none)]
+    #[merge(strategy = merge_hashmap::option::overwrite_none)]
     pub team_base_positions: Option<HashMap<Team, HashMap<BasePositions, Option<Vector2>>>>,
 
-    #[merge(strategy = merge::option::overwrite_none)]
+    #[merge(strategy = merge_hashmap::option::overwrite_none)]
     pub team_spawn_points: Option<TeamSpawnPoints>,
 
-    #[merge(strategy = merge::option::overwrite_none)]
+    #[merge(strategy = merge_hashmap::option::overwrite_none)]
     #[serde(default, deserialize_with = "team_id_deserializer")]
     pub winner_if_timeout: Option<Team>,
 
-    #[merge(strategy = merge::option::overwrite_none)]
+    #[merge(strategy = merge_hashmap::option::overwrite_none)]
     #[serde(default, deserialize_with = "team_id_deserializer")]
     pub winner_if_extermination: Option<Team>,
 
-    #[merge(strategy = merge::option::overwrite_none)]
+    #[merge(strategy = merge_hashmap::option::overwrite_none)]
     round_length: Option<i32>,
 }
 
@@ -150,23 +150,23 @@ impl fmt::Display for ArenaMode {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Merge)]
 #[serde(rename_all = "camelCase")]
 pub struct ArenaDefinition {
-    #[merge(strategy = merge::option::overwrite_none)]
+    #[merge(strategy = merge_hashmap::option::overwrite_none)]
     bounding_box: Option<BoundingBox>,
 
-    #[merge(strategy = merge::hashmap::intersection)]
+    #[merge(strategy = merge_hashmap::hashmap::intersection)]
     gameplay_types: HashMap<ArenaMode, ArenaModeDesc>,
 
-    #[merge(strategy = merge::option::overwrite_none)]
+    #[merge(strategy = merge_hashmap::option::overwrite_none)]
     vehicle_camouflage_kind: Option<VehicleCamouflageKind>,
 
-    #[merge(strategy = merge::option::overwrite_none)]
+    #[merge(strategy = merge_hashmap::option::overwrite_none)]
     round_length: Option<i32>,
 
-    #[merge(strategy = merge::option::overwrite_none)]
+    #[merge(strategy = merge_hashmap::option::overwrite_none)]
     #[serde(default, deserialize_with = "team_id_deserializer")]
     pub winner_if_timeout: Option<Team>,
 
-    #[merge(strategy = merge::option::overwrite_none)]
+    #[merge(strategy = merge_hashmap::option::overwrite_none)]
     #[serde(default, deserialize_with = "team_id_deserializer")]
     pub winner_if_extermination: Option<Team>,
 }

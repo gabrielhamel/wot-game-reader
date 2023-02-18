@@ -19,4 +19,4 @@ serde = { version = "1", features = ["derive"] }
 serde-xml-rs = "0.6"
 poreader = "1.1.1"
 serde_variant = "0.1"
-merge = { git = "https://github.com/Gabouchet/merge-rs", version = "0.1.0" }
+merge-hashmap = { version = "0.1.2" }
